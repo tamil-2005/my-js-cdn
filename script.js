@@ -1,8 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
   /* ================= CONFIGURATION ================= */
   const CONFIG = {
-    API_URL: "http://localhost:3000/api/chat",
-    RESULT_URL: "http://localhost:3000/api/result",
+    API_URL: "https://telivy-backend.azurewebsites.net/api/chat",
+    RESULT_URL: "https://telivy-backend.azurewebsites.net/api/result",
     POLL_INTERVAL: 5000,      // 5 seconds
     POLL_MAX_DURATION: 180000, // 3 minutes
     LOADER_DELAY: 600,
@@ -986,6 +986,7 @@ function initChatAnimation() {
   }
 
   initChat();
+
 
 
 
