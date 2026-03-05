@@ -859,7 +859,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("load", () => {
     const payload = { cryptoUID: crypto.randomUUID() };
-    // navigator.sendBeacon(CONFIG.REFRESH_URL, JSON.stringify(payload));
     navigator.sendBeacon("https://telivy-backend.azurewebsites.net/api/refresh", JSON.stringify(payload));
   });
 
