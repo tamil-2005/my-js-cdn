@@ -1,18 +1,23 @@
 document.addEventListener("DOMContentLoaded", () => {
+
+
+  const BASE_URL = "https://telivy-backend.azurewebsites.net";
+  // const BASE_URL = "http://localhost:3000";
   /* ================= CONFIGURATION ================= */
   const CONFIG = {
-    API_URL: "https://telivy-backend.azurewebsites.net/api/chat",
-    RESULT_URL: "https://telivy-backend.azurewebsites.net/api/result",
+    API_URL: BASE_URL+"/api/chat",
+    RESULT_URL: BASE_URL+"/api/result",
+    REFRESH: BASE_URL+"/refresh",
     POLL_INTERVAL: 5000,      // 5 seconds
     POLL_MAX_DURATION: 180000, // 3 minutes
     LOADER_DELAY: 600,
     TOOLTIP_RADIUS: 12
   };
 
-
-
-    const suggestionContainer = document.querySelector('.suggestion-container');
-
+  /* ================= SESSION MANAGEMENT ================= */
+  // Each browser tab gets its own chatbot session
+  const SESSION_ID = "session_" + crypto.randomUUID();
+  console.log("Chat Session ID:", SESSION_ID);
 
 
   /* ================= CHAT SYSTEM ================= */
@@ -81,12 +86,16 @@ document.addEventListener("DOMContentLoaded", () => {
       if (typing) typing.remove();
     },
 
+    // ✅ FIX: sendToAPI now uses the shared SESSION_ID correctly
     async sendToAPI(text) {
       try {
         const res = await fetch(CONFIG.API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text })
+          body: JSON.stringify({
+            session_id: SESSION_ID,
+            message: text
+          })
         });
 
         if (!res.ok) {
@@ -95,6 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const data = await res.json();
         this.addMessage(data.reply || "No response", "bot");
+
       } catch (error) {
         console.error("Send API Error:", error);
         this.addMessage("⚠ Server not reachable.", "bot");
@@ -489,8 +499,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       rows.innerHTML = "";
 
-      // FIX 1: Accumulate totals across ALL findings before rendering,
-      // then call updateRiskBar once with the combined totals.
       const totalSeverities = { high: 0, medium: 0, low: 0, info: 0 };
 
       for (let i = 0; i < this.displayOrder.length; i += 2) {
@@ -510,7 +518,6 @@ document.addEventListener("DOMContentLoaded", () => {
             info: 0
           };
 
-          // Accumulate into totals instead of calling updateRiskBar per item
           totalSeverities.high   += Number(severities.high   ?? 0);
           totalSeverities.medium += Number(severities.medium ?? 0);
           totalSeverities.low    += Number(severities.low    ?? 0);
@@ -567,7 +574,6 @@ document.addEventListener("DOMContentLoaded", () => {
         rows.appendChild(row);
       }
 
-      // FIX 1 (continued): Single call with accumulated totals
       updateRiskBar(totalSeverities);
 
       const findingsContainer = document.getElementById("findings_out");
@@ -685,13 +691,18 @@ document.addEventListener("DOMContentLoaded", () => {
     chat.appendChatMessage(message, "user");
     chat.chatInput.value = "";
     chat.showTypingIndicator();
-    suggestionContainer.classList.add('hide')
+
 
     try {
+      // ✅ FIX: Single fetch using shared SESSION_ID — no duplicate requests,
+      // backend correctly maps session_id → chatbot instance per tab
       const res = await fetch(CONFIG.API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message })
+        body: JSON.stringify({
+          session_id: SESSION_ID,
+          message: message
+        })
       });
 
       if (!res.ok) {
@@ -713,7 +724,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (sessionId) {
-        const chatBody  = document.querySelector(".chat_bod");
+        const chatBody   = document.querySelector(".chat_bod");
         const resultBody = document.querySelector(".result_body");
 
         if (emailData.email) {
@@ -769,7 +780,6 @@ document.addEventListener("DOMContentLoaded", () => {
       chat.appendChatMessage(reply, "bot");
 
     } catch (err) {
-      // FIX 2 (continued): Also hide on outer catch
       chat.hideTypingIndicator();
       chat.appendChatMessage("❌ Server error. Try again.", "bot");
       console.error("Handle message error:", err);
@@ -789,7 +799,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   if (chat.chatInput) {
-    
     chat.chatInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -798,7 +807,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-
+  /* ================= ANIMATED PLACEHOLDER ================= */
   const animatePlaceholder = () => {
     const placeholders = [
       "F","Fr","Fre","Free","Free ","Free t","Free th","Free thr","Free thre",
@@ -851,13 +860,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("load", () => {
     const payload = { cryptoUID: crypto.randomUUID() };
-    navigator.sendBeacon("https://telivy-backend.azurewebsites.net/api/refresh", JSON.stringify(payload));
+    navigator.sendBeacon(CONFIG.REFRESH, JSON.stringify(payload));
   });
-
-
 
 });
 
+/* ================= CHAT ANIMATION (result view) ================= */
 function initChatAnimation() {
   const CONFIG = {
     initialDelay: 290,
@@ -986,12 +994,4 @@ function initChatAnimation() {
   }
 
   initChat();
-
-
-
-
-
-
-
 }
-
