@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const CONFIG = {
     API_URL: BASE_URL+"/api/chat",
     RESULT_URL: BASE_URL+"/api/result",
-    REFRESH: BASE_URL+"/refresh",
+    REFRESH: BASE_URL+"api/refresh",
     POLL_INTERVAL: 5000,      // 5 seconds
     POLL_MAX_DURATION: 180000, // 3 minutes
     LOADER_DELAY: 600,
@@ -995,3 +995,4 @@ function initChatAnimation() {
 
   initChat();
 }
+
