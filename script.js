@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const CONFIG = {
     API_URL: BASE_URL+"/api/chat",
     RESULT_URL: BASE_URL+"/api/result",
-    REFRESH: BASE_URL+"api/refresh",
+    // REFRESH_URL: BASE_URL+"api/refresh",
     POLL_INTERVAL: 5000,      // 5 seconds
     POLL_MAX_DURATION: 180000, // 3 minutes
     LOADER_DELAY: 600,
@@ -860,7 +860,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("load", () => {
     const payload = { cryptoUID: crypto.randomUUID() };
-    navigator.sendBeacon(CONFIG.REFRESH, JSON.stringify(payload));
+    // navigator.sendBeacon(CONFIG.REFRESH_URL, JSON.stringify(payload));
+    navigator.sendBeacon("https://telivy-backend.azurewebsites.net/api/refresh", JSON.stringify(payload));
   });
 
 });
@@ -995,4 +996,3 @@ function initChatAnimation() {
 
   initChat();
 }
-
