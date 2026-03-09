@@ -859,7 +859,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("load", () => {
     const payload = { cryptoUID: crypto.randomUUID() };
-    navigator.sendBeacon("https://telivy-backend.azurewebsites.net//api/refresh", JSON.stringify(payload));
+    navigator.sendBeacon("https://telivy-backend.azurewebsites.net/api/refresh", JSON.stringify(payload));
   });
 
 });
@@ -994,4 +994,5 @@ function initChatAnimation() {
 
   initChat();
 }
+
 
