@@ -219,7 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "Application Security",
       "DNS Health",
       "IP Reputation",
-      "Internal Vulnerabilities"
+      "External Vulnerabilities"
     ],
 
     scanTypeMap: {
@@ -228,7 +228,7 @@ document.addEventListener("DOMContentLoaded", () => {
       applicationSecurity: "Application Security",
       dnsHealth: "DNS Health",
       ipReputation: "IP Reputation",
-      externalVulnerabilities: "Internal Vulnerabilities"
+      externalVulnerabilities: "External Vulnerabilities"
     },
 
     cfg: null,
@@ -549,13 +549,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
           const issueText = severityCount === 1 ? "issue" : "issues";
 
+
+  const titleMap = {
+  SOCIALENGINEERING: "Social Engineering",
+  NETWORKSECURITY: "Network Security",
+  APPLICATIONSECURITY: "Application Security",
+  DNSHEALTH: "DNS Health",
+  IPREPUTATION: "IP Reputation",
+  EXTERNALVULNERABILITIES: "External Vulnerabilities"
+};
+
+
+
           findingDiv.innerHTML = `
             <div class="grade-span-box">
               <div class="grade">${grade}</div>
               <span class="grade-span-${severityType}">${severityType.toUpperCase()}</span>
             </div>
             <div class="findings_box">
-              <div class="finding-title">${key}</div>
+              <div class="finding-title">${titleMap[key.toUpperCase()] || key}</div>
               <div class="finding-desc">${this.descriptions[key] ?? ""}</div>
             </div>
             <div class="finding-count">
@@ -881,7 +893,7 @@ function initChatAnimation() {
     "Application Security",
     "DNS Health",
     "IP Reputation",
-    "Internal Vulnerabilities"
+    "External Vulnerabilities"
   ];
 
   function createChatBubble() {
@@ -994,5 +1006,3 @@ function initChatAnimation() {
 
   initChat();
 }
-
-
