@@ -785,7 +785,8 @@ function initChatAnimation() {
   };
 
   const chat       = document.getElementById("chat");
-  const headerText = "Thank you for providing your email address. Your domain dark web report is currently being generated. The results will be based on the following categories.";
+ const headerText =
+"Thanks for sharing your email. This may take a few moments. If the scan takes longer, the complete report will be delivered to your email. The analysis will cover the following security categories.";
   const scanItems  = [
     "Social Engineering",
     "Network Security",
@@ -843,6 +844,12 @@ function initChatAnimation() {
     chat.appendChild(finalBubble);
   }
 
+    function showEmailMessage() {
+    const finalBubbleE       = document.createElement("div");
+    finalBubbleE.className   = "final-Email";
+    finalBubbleE.textContent = "Your Report Generation Makes some /n Time If there is Taking lot of time we will provide an report through email / n Gently Wait until the Report"
+  }
+
   function setInputState(disabled) {
     const inputBar   = document.querySelector(".input-bar input");
     const sendButton = document.querySelector(".send");
@@ -873,6 +880,7 @@ function initChatAnimation() {
     await animateScanItems(scanList, scanItems, CONFIG.scanItemDelay);
 
     showFinalMessage();
+    showEmailMessage();
 
     await new Promise(resolve => setTimeout(resolve, 800));
     setInputState(false);
