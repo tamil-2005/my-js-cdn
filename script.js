@@ -1,42 +1,39 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-
   const BASE_URL = "https://telivy-backend.azurewebsites.net";
   // const BASE_URL = "http://localhost:3000";
+
   /* ================= CONFIGURATION ================= */
   const CONFIG = {
-    API_URL: BASE_URL+"/api/chat",
-    RESULT_URL: BASE_URL+"/api/result",
-    POLL_INTERVAL: 5000,      // 5 seconds
-    POLL_MAX_DURATION: 180000, // 3 minutes
-    LOADER_DELAY: 600,
-    TOOLTIP_RADIUS: 12
+    API_URL:          BASE_URL + "/api/chat",
+    RESULT_URL:       BASE_URL + "/api/result",
+    POLL_INTERVAL:    5000,
+    POLL_MAX_DURATION: 180000,
+    LOADER_DELAY:     600,
+    TOOLTIP_RADIUS:   12
   };
 
-  /* ================= SESSION MANAGEMENT ================= */
-  // Each browser tab gets its own chatbot session
+  /* ================= SESSION ================= */
   const SESSION_ID = "session_" + crypto.randomUUID();
   console.log("Chat Session ID:", SESSION_ID);
 
-
   /* ================= CHAT SYSTEM ================= */
   const chat = {
-    thread: document.getElementById("thread"),
-    input: document.getElementById("chatInput_inner"),
-    sendBtn: document.getElementById("sendBtn"),
-    chatBody: document.getElementById("chatBody"),
+    thread:    document.getElementById("thread"),
+    input:     document.getElementById("chatInput_inner"),
+    sendBtn:   document.getElementById("sendBtn"),
+    chatBody:  document.getElementById("chatBody"),
     chatInput: document.getElementById("chatInput"),
-    chatBod: document.querySelector(".chat_bod"),
+    chatBod:   document.querySelector(".chat_bod"),
 
     addMessage(text, from = "user") {
-      const row = document.createElement("div");
+      const row    = document.createElement("div");
       row.className = "msg";
 
       const avatar = document.createElement("div");
-
       const bubble = document.createElement("div");
       bubble.className = "bubble";
-      bubble.innerHTML = text;
+      bubble.innerHTML  = text;
 
       if (from === "user") {
         row.style.justifyContent = "flex-end";
@@ -50,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
     },
 
     appendChatMessage(text, sender) {
-      const msg = document.createElement("div");
+      const msg    = document.createElement("div");
       msg.className = `message ${sender}`;
 
       const avatar = document.createElement("div");
@@ -58,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const bubble = document.createElement("div");
       bubble.className = "bubble";
-      bubble.innerHTML = text;
+      bubble.innerHTML  = text;
 
       if (sender === "user") {
         msg.appendChild(bubble);
@@ -73,9 +70,9 @@ document.addEventListener("DOMContentLoaded", () => {
     },
 
     showTypingIndicator() {
-      const div = document.createElement("div");
+      const div    = document.createElement("div");
       div.className = "message bot typing";
-      div.id = "typing";
+      div.id        = "typing";
       this.chatBody.appendChild(div);
       this.chatBody.scrollTop = this.chatBody.scrollHeight;
     },
@@ -85,21 +82,15 @@ document.addEventListener("DOMContentLoaded", () => {
       if (typing) typing.remove();
     },
 
-    // ✅ FIX: sendToAPI now uses the shared SESSION_ID correctly
     async sendToAPI(text) {
       try {
         const res = await fetch(CONFIG.API_URL, {
-          method: "POST",
+          method:  "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            session_id: SESSION_ID,
-            message: text
-          })
+          body:    JSON.stringify({ session_id: SESSION_ID, message: text })
         });
 
-        if (!res.ok) {
-          throw new Error(`HTTP Error ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
 
         const data = await res.json();
         this.addMessage(data.reply || "No response", "bot");
@@ -119,13 +110,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  const SendBtn = document.getElementById("handleSendMessage");
-  SendBtn.addEventListener("click", () => {
-    handleSendMessages();
-  });
+  /* ── Bottom send button ── */
+  document.getElementById("handleSendMessage")
+    .addEventListener("click", () => handleSendMessages());
 
-  // Handle initial center input
-  const SendBtnInitial = document.getElementById("handleSendMessageInitial");
+  /* ── Initial center input ── */
+  const SendBtnInitial  = document.getElementById("handleSendMessageInitial");
   const chatInputInitial = document.getElementById("chatInputInitial");
 
   if (SendBtnInitial) {
@@ -157,30 +147,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const api = {
     async getDataFromApi(baseUrl, sessionId) {
       try {
-        if (!sessionId) {
-          throw new Error("Session ID is required");
-        }
+        if (!sessionId) throw new Error("Session ID is required");
 
-        const finalUrl = `${baseUrl}/${sessionId}`;
-        const response = await fetch(finalUrl);
-
-        if (!response.ok) {
-          throw new Error(`HTTP Error ${response.status}`);
-        }
+        const response = await fetch(`${baseUrl}/${sessionId}`);
+        if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
 
         const data = await response.json();
+        return { success: true, status: response.status, data };
 
-        return {
-          success: true,
-          status: response.status,
-          data
-        };
       } catch (err) {
         console.error("❌ GET failed:", err.message);
-        return {
-          success: false,
-          error: err.message
-        };
+        return { success: false, error: err.message };
       }
     },
 
@@ -193,7 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           if (!apiResult.success) {
             console.warn("API request failed:", apiResult.error);
-          } else if (apiResult.data && apiResult.data.result !== null && apiResult.data.result !== undefined) {
+          } else if (apiResult.data?.result != null) {
             return apiResult.data;
           }
         } catch (err) {
@@ -209,8 +186,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ================= RADAR SYSTEM ================= */
   const radar = {
-    canvas: document.getElementById("radar"),
-    ctx: null,
+    canvas:  document.getElementById("radar"),
+    ctx:     null,
     tooltip: document.getElementById("tooltip"),
 
     labels: [
@@ -223,37 +200,35 @@ document.addEventListener("DOMContentLoaded", () => {
     ],
 
     scanTypeMap: {
-      socialEngineering: "Social Engineering",
-      networkSecurity: "Network Security",
-      applicationSecurity: "Application Security",
-      dnsHealth: "DNS Health",
-      ipReputation: "IP Reputation",
-      externalVulnerabilities: "External Vulnerabilities"
+      socialEngineering:      "Social Engineering",
+      networkSecurity:        "Network Security",
+      applicationSecurity:    "Application Security",
+      dnsHealth:              "DNS Health",
+      ipReputation:           "IP Reputation",
+      externalVulnerabilities:"External Vulnerabilities"
     },
 
-    cfg: null,
-    data: [],
+    cfg:         null,
+    data:        [],
     radarPoints: [],
     randomTimer: null,
     easingFrame: null,
 
     init() {
       this.ctx = this.canvas.getContext("2d");
-
       this.cfg = {
-        cx: this.canvas.width / 2,
-        cy: this.canvas.height / 2,
+        cx:     this.canvas.width  / 2,
+        cy:     this.canvas.height / 2,
         radius: 140,
-        rings: 5,
-        grid: "rgba(255,255,255,.12)",
-        axis: "rgba(255,255,255,.18)",
-        fill: "rgba(34,230,200,.18)",
+        rings:  5,
+        grid:   "rgba(255,255,255,.12)",
+        axis:   "rgba(255,255,255,.18)",
+        fill:   "rgba(34,230,200,.18)",
         stroke: "#22e6c8",
-        point: "#49ffd7",
-        label: "#9fb0cc",
-        font: "12px system-ui"
+        point:  "#49ffd7",
+        label:  "#9fb0cc",
+        font:   "12px system-ui"
       };
-
       this.setupHoverTooltip();
     },
 
@@ -265,13 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
     },
 
     scoreFromGrade(grade) {
-      const gradeMap = {
-        "A": 90,
-        "B": 75,
-        "C": 60,
-        "D": 40
-      };
-      return gradeMap[grade] || 100;
+      return { A: 90, B: 75, C: 60, D: 40 }[grade] || 100;
     },
 
     startRandomLoading() {
@@ -279,8 +248,8 @@ document.addEventListener("DOMContentLoaded", () => {
         label,
         score: Math.random() * 100,
         target: null,
-        total: 0,
-        grade: "N/A"
+        total:  0,
+        grade:  "N/A"
       }));
 
       this.drawRadar();
@@ -288,7 +257,7 @@ document.addEventListener("DOMContentLoaded", () => {
       this.randomTimer = setInterval(() => {
         this.data.forEach(d => {
           d.score += Math.random() * 10 - 5;
-          d.score = Math.max(20, Math.min(100, d.score));
+          d.score  = Math.max(20, Math.min(100, d.score));
         });
         this.drawRadar();
       }, 800);
@@ -297,17 +266,15 @@ document.addEventListener("DOMContentLoaded", () => {
     applyAPIResult(apiData) {
       clearInterval(this.randomTimer);
 
-      if (!apiData || !apiData.result || !Array.isArray(apiData.result)) {
+      if (!apiData?.result || !Array.isArray(apiData.result)) {
         console.error("Invalid API response", apiData);
         return;
       }
 
       const map = {};
-
       apiData.result.forEach(item => {
         const label = this.scanTypeMap[item.scanType];
         if (!label) return;
-
         map[label] = {
           score: this.scoreFromGrade(item.grade),
           total: item.totalCount ?? 0,
@@ -318,12 +285,12 @@ document.addEventListener("DOMContentLoaded", () => {
       this.data.forEach(d => {
         if (map[d.label]) {
           d.target = map[d.label].score;
-          d.total = map[d.label].total;
-          d.grade = map[d.label].grade;
+          d.total  = map[d.label].total;
+          d.grade  = map[d.label].grade;
         } else {
           d.target = 100;
-          d.total = 0;
-          d.grade = "N/A";
+          d.total  = 0;
+          d.grade  = "N/A";
         }
       });
 
@@ -345,7 +312,6 @@ document.addEventListener("DOMContentLoaded", () => {
             d.score = d.target;
           }
         });
-
         this.drawRadar();
         if (!done) this.easingFrame = requestAnimationFrame(animate);
       };
@@ -356,10 +322,10 @@ document.addEventListener("DOMContentLoaded", () => {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.radarPoints = [];
 
-      const step = (Math.PI * 2) / this.labels.length;
+      const step  = (Math.PI * 2) / this.labels.length;
       const start = -Math.PI / 2;
 
-      // Draw grid rings
+      // Grid rings
       for (let k = 1; k <= this.cfg.rings; k++) {
         this.ctx.beginPath();
         const r = this.cfg.radius * (k / this.cfg.rings);
@@ -372,7 +338,7 @@ document.addEventListener("DOMContentLoaded", () => {
         this.ctx.stroke();
       }
 
-      // Draw axes and labels
+      // Axes + labels
       this.ctx.font = this.cfg.font;
       this.labels.forEach((label, i) => {
         const angle = start + i * step;
@@ -385,38 +351,29 @@ document.addEventListener("DOMContentLoaded", () => {
         this.ctx.stroke();
 
         const [lx, ly] = this.polar(angle, this.cfg.radius + 18);
-        this.ctx.fillStyle = this.cfg.label;
-        this.ctx.textAlign = Math.cos(angle) > 0.3 ? "left" :
-          Math.cos(angle) < -0.3 ? "right" : "center";
-        this.ctx.textBaseline = Math.sin(angle) > 0.3 ? "top" :
-          Math.sin(angle) < -0.3 ? "bottom" : "middle";
+        this.ctx.fillStyle    = this.cfg.label;
+        this.ctx.textAlign    = Math.cos(angle) > 0.3 ? "left" : Math.cos(angle) < -0.3 ? "right" : "center";
+        this.ctx.textBaseline = Math.sin(angle) > 0.3 ? "top"  : Math.sin(angle) < -0.3 ? "bottom" : "middle";
         this.ctx.fillText(label, lx, ly);
       });
 
-      // Draw data polygon
+      // Data polygon
       this.ctx.beginPath();
       this.data.forEach((d, i) => {
         const angle = start + i * step;
-        const r = this.cfg.radius * (d.score / 100);
+        const r     = this.cfg.radius * (d.score / 100);
         const [x, y] = this.polar(angle, r);
 
-        this.radarPoints.push({
-          x,
-          y,
-          label: d.label,
-          grade: d.grade,
-          total: d.total
-        });
-
+        this.radarPoints.push({ x, y, label: d.label, grade: d.grade, total: d.total });
         i ? this.ctx.lineTo(x, y) : this.ctx.moveTo(x, y);
       });
       this.ctx.closePath();
-      this.ctx.fillStyle = this.cfg.fill;
+      this.ctx.fillStyle   = this.cfg.fill;
       this.ctx.strokeStyle = this.cfg.stroke;
       this.ctx.fill();
       this.ctx.stroke();
 
-      // Draw points
+      // Points
       this.radarPoints.forEach(p => {
         this.ctx.beginPath();
         this.ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
@@ -429,31 +386,22 @@ document.addEventListener("DOMContentLoaded", () => {
       this.canvas.addEventListener("mousemove", (e) => {
         if (!this.radarPoints.length) return;
 
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        let found = null;
-        const hitRadius = CONFIG.TOOLTIP_RADIUS * CONFIG.TOOLTIP_RADIUS;
+        const rect     = this.canvas.getBoundingClientRect();
+        const x        = e.clientX - rect.left;
+        const y        = e.clientY - rect.top;
+        const hitR2    = CONFIG.TOOLTIP_RADIUS * CONFIG.TOOLTIP_RADIUS;
+        let   found    = null;
 
         for (const p of this.radarPoints) {
-          const dx = x - p.x;
-          const dy = y - p.y;
-
-          if (dx * dx + dy * dy <= hitRadius) {
-            found = p;
-            break;
-          }
+          const dx = x - p.x, dy = y - p.y;
+          if (dx * dx + dy * dy <= hitR2) { found = p; break; }
         }
 
         this.tooltip.style.display = found ? "block" : "none";
         if (found) {
-          this.tooltip.style.left = e.clientX + 12 + "px";
-          this.tooltip.style.top = e.clientY + 12 + "px";
-          this.tooltip.innerHTML = `
-            <b>${found.label}</b><br>
-            Grade: <b>${found.grade}</b><br>
-          `;
+          this.tooltip.style.left  = e.clientX + 12 + "px";
+          this.tooltip.style.top   = e.clientY + 12 + "px";
+          this.tooltip.innerHTML   = `<b>${found.label}</b><br>Grade: <b>${found.grade}</b>`;
         }
       });
     }
@@ -462,12 +410,12 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ================= FINDINGS DISPLAY ================= */
   const findings = {
     descriptions: {
-      socialEngineering: "",
-      networkSecurity: "",
-      applicationSecurity: "",
-      dnsHealth: "",
-      ipReputation: "",
-      externalVulnerabilities: ""
+      socialEngineering:      "",
+      networkSecurity:        "",
+      applicationSecurity:    "",
+      dnsHealth:              "",
+      ipReputation:           "",
+      externalVulnerabilities:""
     },
 
     displayOrder: [
@@ -479,25 +427,28 @@ document.addEventListener("DOMContentLoaded", () => {
       "externalVulnerabilities"
     ],
 
+    titleMap: {
+      SOCIALENGINEERING:      "Social Engineering",
+      NETWORKSECURITY:        "Network Security",
+      APPLICATIONSECURITY:    "Application Security",
+      DNSHEALTH:              "DNS Health",
+      IPREPUTATION:           "IP Reputation",
+      EXTERNALVULNERABILITIES:"External Vulnerabilities"
+    },
+
     render(apiResult) {
-      if (!apiResult || !apiResult.result || !Array.isArray(apiResult.result)) {
+      if (!apiResult?.result || !Array.isArray(apiResult.result)) {
         console.error("Invalid findings data:", apiResult);
         return;
       }
 
       const scanMap = {};
-      apiResult.result.forEach(item => {
-        scanMap[item.scanType] = item;
-      });
+      apiResult.result.forEach(item => { scanMap[item.scanType] = item; });
 
       const rows = document.getElementById("findingsRows");
-      if (!rows) {
-        console.error("findingsRows element not found");
-        return;
-      }
+      if (!rows) { console.error("findingsRows not found"); return; }
 
       rows.innerHTML = "";
-
       const totalSeverities = { high: 0, medium: 0, low: 0, info: 0 };
 
       for (let i = 0; i < this.displayOrder.length; i += 2) {
@@ -507,15 +458,9 @@ document.addEventListener("DOMContentLoaded", () => {
         [this.displayOrder[i], this.displayOrder[i + 1]].forEach(key => {
           if (!key || !scanMap[key]) return;
 
-          const scan = scanMap[key];
-          const grade = scan.grade || "N/A";
-
-          const severities = scan.severities || {
-            high: 0,
-            medium: 0,
-            low: 0,
-            info: 0
-          };
+          const scan       = scanMap[key];
+          const grade      = scan.grade || "N/A";
+          const severities = scan.severities || { high: 0, medium: 0, low: 0, info: 0 };
 
           totalSeverities.high   += Number(severities.high   ?? 0);
           totalSeverities.medium += Number(severities.medium ?? 0);
@@ -527,39 +472,17 @@ document.addEventListener("DOMContentLoaded", () => {
           const low    = Number(severities.low    ?? 0);
           const info   = Number(severities.info   ?? 0);
 
-          let severityType = "safe";
+          let severityType  = "safe";
           let severityCount = 0;
 
-          if (high > 0) {
-            severityType = "high";
-            severityCount = high;
-          } else if (medium > 0) {
-            severityType = "medium";
-            severityCount = medium;
-          } else if (low > 0) {
-            severityType = "low";
-            severityCount = low;
-          } else if (info > 0) {
-            severityType = "safe";
-            severityCount = info;
-          }
+          if      (high   > 0) { severityType = "high";   severityCount = high; }
+          else if (medium > 0) { severityType = "medium"; severityCount = medium; }
+          else if (low    > 0) { severityType = "low";    severityCount = low; }
+          else if (info   > 0) { severityType = "safe";   severityCount = info; }
 
-          const findingDiv = document.createElement("div");
-          findingDiv.className = `finding severity-${severityType}`;
-
-          const issueText = severityCount === 1 ? "issue" : "issues";
-
-
-  const titleMap = {
-  SOCIALENGINEERING: "Social Engineering",
-  NETWORKSECURITY: "Network Security",
-  APPLICATIONSECURITY: "Application Security",
-  DNSHEALTH: "DNS Health",
-  IPREPUTATION: "IP Reputation",
-  EXTERNALVULNERABILITIES: "External Vulnerabilities"
-};
-
-
+          const findingDiv      = document.createElement("div");
+          findingDiv.className  = `finding severity-${severityType}`;
+          const issueText       = severityCount === 1 ? "issue" : "issues";
 
           findingDiv.innerHTML = `
             <div class="grade-span-box">
@@ -567,15 +490,13 @@ document.addEventListener("DOMContentLoaded", () => {
               <span class="grade-span-${severityType}">${severityType.toUpperCase()}</span>
             </div>
             <div class="findings_box">
-              <div class="finding-title">${titleMap[key.toUpperCase()] || key}</div>
+              <div class="finding-title">${this.titleMap[key.toUpperCase()] || key}</div>
               <div class="finding-desc">${this.descriptions[key] ?? ""}</div>
             </div>
             <div class="finding-count">
-              ${
-                severityCount > 0
-                  ? `<span class="count-${severityType}">${severityCount} ${issueText}</span>`
-                  : `<span class="no-issue">0 issues</span>`
-              }
+              ${severityCount > 0
+                ? `<span class="count-${severityType}">${severityCount} ${issueText}</span>`
+                : `<span class="no-issue">0 issues</span>`}
             </div>
           `;
 
@@ -587,10 +508,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       updateRiskBar(totalSeverities);
 
+      /* ── Hide skeleton, reveal real findings ── */
+      document.getElementById("findingsSkeleton").classList.add("hide");
       const findingsContainer = document.getElementById("findings_out");
-      if (findingsContainer) {
-        findingsContainer.classList.add("show");
-      }
+      if (findingsContainer) findingsContainer.classList.add("show");
     }
   };
 
@@ -599,73 +520,60 @@ document.addEventListener("DOMContentLoaded", () => {
     const high   = Number(severities?.high   ?? 0);
     const medium = Number(severities?.medium ?? 0);
     const low    = Number(severities?.low    ?? 0);
+    const total  = high + medium + low;
 
-    const total = high + medium + low;
-
-    const highPercent   = total ? (high   / total) * 100 : 0;
-    const mediumPercent = total ? (medium / total) * 100 : 0;
-    const lowPercent    = total ? (low    / total) * 100 : 0;
+    const highPct   = total ? (high   / total) * 100 : 0;
+    const mediumPct = total ? (medium / total) * 100 : 0;
+    const lowPct    = total ? (low    / total) * 100 : 0;
 
     const highEl   = document.querySelector(".risk-high");
     const mediumEl = document.querySelector(".risk-medium");
     const lowEl    = document.querySelector(".risk-low");
 
-    if (highEl)   highEl.style.width   = highPercent   + "%";
-    if (mediumEl) mediumEl.style.width = mediumPercent + "%";
-    if (lowEl)    lowEl.style.width    = lowPercent    + "%";
+    if (highEl)   highEl.style.width   = highPct   + "%";
+    if (mediumEl) mediumEl.style.width = mediumPct + "%";
+    if (lowEl)    lowEl.style.width    = lowPct    + "%";
   }
 
   /* ================= UTILITIES ================= */
   function formatDate(dateString) {
-    const date = new Date(dateString);
-    const day = date.getDate();
-    const year = date.getFullYear();
-
+    const date   = new Date(dateString);
+    const day    = date.getDate();
+    const year   = date.getFullYear();
     const months = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
+      "January","February","March","April","May","June",
+      "July","August","September","October","November","December"
     ];
     const month = months[date.getMonth()];
 
-    function getDaySuffix(d) {
+    const suffix = (d) => {
       if (d > 3 && d < 21) return "th";
-      switch (d % 10) {
-        case 1: return "st";
-        case 2: return "nd";
-        case 3: return "rd";
-        default: return "th";
-      }
-    }
+      return ["th","st","nd","rd"][d % 10] || "th";
+    };
 
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const seconds = String(date.getSeconds()).padStart(2, "0");
-    const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12;
+    let hours   = date.getHours();
+    const mins  = String(date.getMinutes()).padStart(2, "0");
+    const secs  = String(date.getSeconds()).padStart(2, "0");
+    const ampm  = hours >= 12 ? "PM" : "AM";
+    hours       = hours % 12 || 12;
 
-    return `${day}${getDaySuffix(day)} ${month} ${year} ${String(hours).padStart(2, "0")}:${minutes}:${seconds} ${ampm}`;
+    return `${day}${suffix(day)} ${month} ${year} ${String(hours).padStart(2,"0")}:${mins}:${secs} ${ampm}`;
   }
 
-  /* ================= POLLING HELPERS ================= */
+  /* ================= POLLING ================= */
   const REQUIRED_SCAN_TYPES = [
-    "socialEngineering",
-    "externalVulnerabilities",
-    "networkSecurity",
-    "applicationSecurity",
-    "dnsHealth",
-    "ipReputation"
+    "socialEngineering","externalVulnerabilities",
+    "networkSecurity","applicationSecurity",
+    "dnsHealth","ipReputation"
   ];
 
-  function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
+  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
   function isResultComplete(result) {
     if (!Array.isArray(result)) return false;
     return REQUIRED_SCAN_TYPES.every(type => {
       const scan = result.find(r => r.scanType === type);
-      if (!scan) return false;
-      return scan.grade !== null;
+      return scan && scan.grade !== null;
     });
   }
 
@@ -676,24 +584,24 @@ document.addEventListener("DOMContentLoaded", () => {
       const apiData = await api.pollForResult(sessionId);
 
       if (!apiData) {
-        console.log("⚠️ No data returned, continuing to poll...");
+        console.log("⚠️ No data, retrying...");
         await sleep(delay);
         continue;
       }
 
       if (isResultComplete(apiData.result)) {
-        console.log("✅ All scan data received and complete!");
+        console.log("✅ All scan data received!");
         return apiData;
       }
 
-      console.log(`📊 Data incomplete. Found ${apiData.result?.length || 0} scan types.`);
+      console.log(`📊 Incomplete. Found ${apiData.result?.length || 0} scan types.`);
       await sleep(delay);
     }
 
-    throw new Error("❌ Scan data not fully ready after max retries");
+    throw new Error("❌ Scan data not ready after max retries");
   }
 
-  /* ================= MAIN MESSAGE HANDLER ================= */
+  /* ================= MAIN HANDLER ================= */
   async function handleSendMessages() {
     const message = chat.chatInput.value.trim();
     if (!message) return;
@@ -703,45 +611,36 @@ document.addEventListener("DOMContentLoaded", () => {
     chat.chatInput.value = "";
     chat.showTypingIndicator();
 
-
     try {
-      // ✅ FIX: Single fetch using shared SESSION_ID — no duplicate requests,
-      // backend correctly maps session_id → chatbot instance per tab
       const res = await fetch(CONFIG.API_URL, {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_id: SESSION_ID,
-          message: message
-        })
+        body:    JSON.stringify({ session_id: SESSION_ID, message })
       });
 
-      if (!res.ok) {
-        throw new Error(`HTTP Error ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
 
       const emailData = await res.json();
       console.log("📧 Email Data:", emailData);
-
       chat.hideTypingIndicator();
 
+      /* ── Extract session ID from response ── */
       let sessionId = null;
-
       if (emailData.webhook?.session_id) {
         sessionId = emailData.webhook.session_id;
       } else if (Array.isArray(emailData.results)) {
-        const firstValid = emailData.results.find(r => r.session_id);
-        if (firstValid) sessionId = firstValid.session_id;
+        const first = emailData.results.find(r => r.session_id);
+        if (first) sessionId = first.session_id;
       }
 
       if (sessionId) {
         const chatBody   = document.querySelector(".chat_bod");
         const resultBody = document.querySelector(".result_body");
 
+        /* ── Show user name ── */
         if (emailData.email) {
-          const rawName = emailData.email.split("@")[0];
+          const rawName    = emailData.email.split("@")[0];
           const userNameEl = document.getElementById("userName");
-
           if (userNameEl) {
             const displayName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
             userNameEl.innerHTML = `
@@ -755,6 +654,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
 
+        /* ── Switch to result view ── */
         setTimeout(() => {
           if (chatBody) {
             chatBody.classList.add("fade-out");
@@ -767,19 +667,17 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }, 300);
 
+        /* ── Poll for scan results ── */
         try {
           const apiResult = await pollUntilAllDataReady(sessionId);
-          console.log("✅ Complete API Result:", apiResult);
+          console.log("✅ Complete Result:", apiResult);
 
           radar.applyAPIResult(apiResult);
           findings.render(apiResult);
 
           if (apiResult.created_at) {
-            const createDate = formatDate(apiResult.created_at);
             const scanInfo = document.getElementById("scanInfo");
-            if (scanInfo) {
-              scanInfo.textContent = "Last scanned on " + createDate;
-            }
+            if (scanInfo) scanInfo.textContent = "Last scanned on " + formatDate(apiResult.created_at);
           }
         } catch (error) {
           console.error("❌ Polling error:", error);
@@ -801,20 +699,16 @@ document.addEventListener("DOMContentLoaded", () => {
   if (chat.sendBtn) {
     chat.sendBtn.addEventListener("click", () => chat.sendMessage());
   }
+
   if (chat.input) {
     chat.input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        chat.sendMessage();
-      }
+      if (e.key === "Enter") { e.preventDefault(); chat.sendMessage(); }
     });
   }
+
   if (chat.chatInput) {
     chat.chatInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleSendMessages();
-      }
+      if (e.key === "Enter") { e.preventDefault(); handleSendMessages(); }
     });
   }
 
@@ -860,6 +754,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   animatePlaceholder();
 
+  /* ================= INIT RADAR ================= */
   radar.init();
   radar.startRandomLoading();
 
@@ -869,9 +764,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (radar.canvas) radar.canvas.style.display = "block";
   }, CONFIG.LOADER_DELAY);
 
+  /* ================= BEACON ON LOAD ================= */
   window.addEventListener("load", () => {
     const payload = { cryptoUID: crypto.randomUUID() };
-    navigator.sendBeacon("https://telivy-backend.azurewebsites.net/api/refresh", JSON.stringify(payload));
+    navigator.sendBeacon(
+      "https://telivy-backend.azurewebsites.net/api/refresh",
+      JSON.stringify(payload)
+    );
   });
 
 });
@@ -880,14 +779,14 @@ document.addEventListener("DOMContentLoaded", () => {
 function initChatAnimation() {
   const CONFIG = {
     initialDelay: 290,
-    headerDelay: 300,
-    wordDelay: 230,
-    scanItemDelay: 300
+    headerDelay:  300,
+    wordDelay:    230,
+    scanItemDelay:300
   };
 
-  const chat = document.getElementById("chat");
+  const chat       = document.getElementById("chat");
   const headerText = "Thank you for providing your email address. Your domain dark web report is currently being generated. The results will be based on the following categories.";
-  const scanItems = [
+  const scanItems  = [
     "Social Engineering",
     "Network Security",
     "Application Security",
@@ -915,15 +814,10 @@ function initChatAnimation() {
   function animateText(element, text, wordDelay) {
     return new Promise((resolve) => {
       const words = text.split(" ");
-      let currentIndex = 0;
-
-      const interval = setInterval(() => {
-        element.textContent += (currentIndex === 0 ? "" : " ") + words[currentIndex];
-        currentIndex++;
-        if (currentIndex === words.length) {
-          clearInterval(interval);
-          resolve();
-        }
+      let idx     = 0;
+      const iv    = setInterval(() => {
+        element.textContent += (idx === 0 ? "" : " ") + words[idx++];
+        if (idx === words.length) { clearInterval(iv); resolve(); }
       }, wordDelay);
     });
   }
@@ -932,62 +826,42 @@ function initChatAnimation() {
     return new Promise((resolve) => {
       items.forEach((itemText, index) => {
         setTimeout(() => {
-          const item = document.createElement("div");
-          item.className = "scan-item";
+          const item       = document.createElement("div");
+          item.className   = "scan-item";
           item.textContent = itemText;
           list.appendChild(item);
-
-          if (index === items.length - 1) {
-            setTimeout(resolve, 400);
-          }
+          if (index === items.length - 1) setTimeout(resolve, 400);
         }, index * itemDelay);
       });
     });
   }
 
   function showFinalMessage() {
-    const finalBubble = document.createElement("div");
-    finalBubble.className = "final-message";
+    const finalBubble       = document.createElement("div");
+    finalBubble.className   = "final-message";
     finalBubble.textContent = "Now you can chat with us";
     chat.appendChild(finalBubble);
   }
 
-  function disableInput() {
+  function setInputState(disabled) {
     const inputBar   = document.querySelector(".input-bar input");
     const sendButton = document.querySelector(".send");
 
     if (inputBar) {
-      inputBar.disabled = true;
-      inputBar.placeholder = "Loading...";
-      inputBar.style.opacity = "0.5";
-      inputBar.style.cursor  = "not-allowed";
+      inputBar.disabled     = disabled;
+      inputBar.placeholder  = disabled ? "Loading..." : "chat with me...";
+      inputBar.style.opacity = disabled ? "0.5" : "1";
+      inputBar.style.cursor  = disabled ? "not-allowed" : "text";
     }
     if (sendButton) {
-      sendButton.disabled = true;
-      sendButton.style.opacity = "0.5";
-      sendButton.style.cursor  = "not-allowed";
-    }
-  }
-
-  function enableInput() {
-    const inputBar   = document.querySelector(".input-bar input");
-    const sendButton = document.querySelector(".send");
-
-    if (inputBar) {
-      inputBar.disabled = false;
-      inputBar.placeholder = "chat with me...";
-      inputBar.style.opacity = "1";
-      inputBar.style.cursor  = "text";
-    }
-    if (sendButton) {
-      sendButton.disabled = false;
-      sendButton.style.opacity = "1";
-      sendButton.style.cursor  = "pointer";
+      sendButton.disabled       = disabled;
+      sendButton.style.opacity  = disabled ? "0.5" : "1";
+      sendButton.style.cursor   = disabled ? "not-allowed" : "pointer";
     }
   }
 
   async function initChat() {
-    disableInput();
+    setInputState(true);
 
     await new Promise(resolve => setTimeout(resolve, CONFIG.initialDelay));
 
@@ -1001,7 +875,7 @@ function initChatAnimation() {
     showFinalMessage();
 
     await new Promise(resolve => setTimeout(resolve, 800));
-    enableInput();
+    setInputState(false);
   }
 
   initChat();
