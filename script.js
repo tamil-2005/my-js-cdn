@@ -1,22 +1,22 @@
 document.addEventListener("DOMContentLoaded", () => {
- 
-  const BASE_URL = "https://telivy-backend.azurewebsites.net";
-//   const BASE_URL = "http://localhost:3000";
- 
+
+//   const BASE_URL = "https://telivy-backend.azurewebsites.net";
+  const BASE_URL = "http://localhost:3000";
+
   /* ================= CONFIGURATION ================= */
   const CONFIG = {
-    API_URL:          BASE_URL + "/api/chat",
-    RESULT_URL:       BASE_URL + "/api/result",
-    POLL_INTERVAL:    5000,
+    API_URL:           BASE_URL + "/api/chat",
+    RESULT_URL:        BASE_URL + "/api/result",
+    POLL_INTERVAL:     5000,
     POLL_MAX_DURATION: 180000,
-    LOADER_DELAY:     600,
-    TOOLTIP_RADIUS:   12
+    LOADER_DELAY:      600,
+    TOOLTIP_RADIUS:    12
   };
- 
+
   /* ================= SESSION ================= */
   const SESSION_ID = "session_" + crypto.randomUUID();
   console.log("Chat Session ID:", SESSION_ID);
- 
+
   /* ================= CHAT SYSTEM ================= */
   const chat = {
     thread:    document.getElementById("thread"),
@@ -27,38 +27,38 @@ document.addEventListener("DOMContentLoaded", () => {
     chatBod:   document.querySelector(".chat_bod"),
     pills:     document.querySelector(".pills"),
     text:      document.querySelector(".text"),
- 
+
     addMessage(text, from = "user") {
-      const row    = document.createElement("div");
+      const row     = document.createElement("div");
       row.className = "msg";
- 
+
       const avatar = document.createElement("div");
       const bubble = document.createElement("div");
       bubble.className = "bubble";
       bubble.innerHTML  = text;
- 
+
       if (from === "user") {
         row.style.justifyContent = "flex-end";
         row.append(bubble, avatar);
       } else {
         row.append(avatar, bubble);
       }
- 
+
       this.thread.appendChild(row);
       this.thread.scrollTop = this.thread.scrollHeight;
     },
- 
+
     appendChatMessage(text, sender) {
-      const msg    = document.createElement("div");
+      const msg     = document.createElement("div");
       msg.className = `message ${sender}`;
- 
-      const avatar = document.createElement("div");
+
+      const avatar     = document.createElement("div");
       avatar.className = "avatar";
- 
-      const bubble = document.createElement("div");
+
+      const bubble     = document.createElement("div");
       bubble.className = "bubble";
       bubble.innerHTML  = text;
- 
+
       if (sender === "user") {
         msg.appendChild(bubble);
         msg.appendChild(avatar);
@@ -66,24 +66,24 @@ document.addEventListener("DOMContentLoaded", () => {
         msg.appendChild(avatar);
         msg.appendChild(bubble);
       }
- 
+
       this.chatBody.appendChild(msg);
       this.chatBody.scrollTop = this.chatBody.scrollHeight;
     },
- 
+
     showTypingIndicator() {
-      const div    = document.createElement("div");
+      const div     = document.createElement("div");
       div.className = "message bot typing";
       div.id        = "typing";
       this.chatBody.appendChild(div);
       this.chatBody.scrollTop = this.chatBody.scrollHeight;
     },
- 
+
     hideTypingIndicator() {
       const typing = document.getElementById("typing");
       if (typing) typing.remove();
     },
- 
+
     async sendToAPI(text) {
       try {
         const res = await fetch(CONFIG.API_URL, {
@@ -91,18 +91,18 @@ document.addEventListener("DOMContentLoaded", () => {
           headers: { "Content-Type": "application/json" },
           body:    JSON.stringify({ session_id: SESSION_ID, message: text })
         });
- 
+
         if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
- 
+
         const data = await res.json();
         this.addMessage(data.reply || "No response", "bot");
- 
+
       } catch (error) {
         console.error("Send API Error:", error);
         this.addMessage("⚠ Server not reachable.", "bot");
       }
     },
- 
+
     sendMessage() {
       const text = this.input.value.trim();
       if (!text) return;
@@ -111,14 +111,14 @@ document.addEventListener("DOMContentLoaded", () => {
       this.sendToAPI(text);
     }
   };
- 
+
   /* ================= CHIP / PILL SETUP ================= */
-  const chips = document.querySelectorAll(".pill");
-  const input = document.getElementById("chatInputInitial");
+  const chips       = document.querySelectorAll(".pill");
+  const input       = document.getElementById("chatInputInitial");
   const sendBtnDiss = document.getElementById("handleSendMessageInitial");
 
   let typingTimeout = null;
-  let isTyping = false;
+  let isTyping      = false;
 
   // Chip click → type question into input + mark active
   chips.forEach(chip => {
@@ -131,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       input.closest(".chat-input-wrapper")?.scrollIntoView({
         behavior: "smooth",
-        block: "center"
+        block:    "center"
       });
 
       setTimeout(() => input.focus(), 300);
@@ -140,11 +140,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ================= TYPING ANIMATION ================= */
   function typeIntoInput(text) {
-    let i = 0;
+    let i     = 0;
     input.value = "";
 
-    isTyping = true;
-    sendBtnDiss.disabled = true;
+    isTyping              = true;
+    sendBtnDiss.disabled  = true;
     sendBtnDiss.classList.add("offed");
 
     if (typingTimeout) clearInterval(typingTimeout);
@@ -155,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
         i++;
       } else {
         clearInterval(typingTimeout);
-        isTyping = false;
+        isTyping             = false;
         sendBtnDiss.disabled = false;
         sendBtnDiss.classList.remove("offed");
       }
@@ -163,7 +163,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ================= INITIAL INPUT SEND ================= */
-  // FIX: Single unified handler — no duplicate listeners, properly calls handleSendMessages
   function triggerInitialSend() {
     if (isTyping) return;
 
@@ -176,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Transfer value to the main chat input and send
     chat.chatInput.value = message;
-    input.value = "";
+    input.value          = "";
     handleSendMessages();
   }
 
@@ -194,26 +193,26 @@ document.addEventListener("DOMContentLoaded", () => {
     async getDataFromApi(baseUrl, sessionId) {
       try {
         if (!sessionId) throw new Error("Session ID is required");
- 
+
         const response = await fetch(`${baseUrl}/${sessionId}`);
         if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
- 
+
         const data = await response.json();
         return { success: true, status: response.status, data };
- 
+
       } catch (err) {
         console.error("❌ GET failed:", err.message);
         return { success: false, error: err.message };
       }
     },
- 
+
     async pollForResult(sessionId) {
       const startTime = Date.now();
- 
+
       while (Date.now() - startTime < CONFIG.POLL_MAX_DURATION) {
         try {
           const apiResult = await this.getDataFromApi(CONFIG.RESULT_URL, sessionId);
- 
+
           if (!apiResult.success) {
             console.warn("API request failed:", apiResult.error);
           } else if (apiResult.data?.result != null) {
@@ -222,20 +221,20 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (err) {
           console.error("Polling error:", err);
         }
- 
+
         await new Promise(resolve => setTimeout(resolve, CONFIG.POLL_INTERVAL));
       }
- 
+
       return null;
     }
   };
- 
+
   /* ================= RADAR SYSTEM ================= */
   const radar = {
     canvas:  document.getElementById("radar"),
     ctx:     null,
     tooltip: document.getElementById("tooltip"),
- 
+
     labels: [
       "Social Engineering",
       "Network Security",
@@ -244,7 +243,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "IP Reputation",
       "External Vulnerabilities"
     ],
- 
+
     scanTypeMap: {
       socialEngineering:       "Social Engineering",
       networkSecurity:         "Network Security",
@@ -253,13 +252,13 @@ document.addEventListener("DOMContentLoaded", () => {
       ipReputation:            "IP Reputation",
       externalVulnerabilities: "External Vulnerabilities"
     },
- 
+
     cfg:         null,
     data:        [],
     radarPoints: [],
     randomTimer: null,
     easingFrame: null,
- 
+
     init() {
       this.ctx = this.canvas.getContext("2d");
       this.cfg = {
@@ -277,29 +276,29 @@ document.addEventListener("DOMContentLoaded", () => {
       };
       this.setupHoverTooltip();
     },
- 
+
     polar(angle, radius) {
       return [
         this.cfg.cx + radius * Math.cos(angle),
         this.cfg.cy + radius * Math.sin(angle)
       ];
     },
- 
+
     scoreFromGrade(grade) {
       return { A: 90, B: 75, C: 60, D: 40 }[grade] || 100;
     },
- 
+
     startRandomLoading() {
       this.data = this.labels.map(label => ({
         label,
-        score: Math.random() * 100,
+        score:  Math.random() * 100,
         target: null,
         total:  0,
         grade:  "N/A"
       }));
- 
+
       this.drawRadar();
- 
+
       this.randomTimer = setInterval(() => {
         this.data.forEach(d => {
           d.score += Math.random() * 10 - 5;
@@ -308,15 +307,15 @@ document.addEventListener("DOMContentLoaded", () => {
         this.drawRadar();
       }, 800);
     },
- 
+
     applyAPIResult(apiData) {
       clearInterval(this.randomTimer);
- 
+
       if (!apiData?.result || !Array.isArray(apiData.result)) {
         console.error("Invalid API response", apiData);
         return;
       }
- 
+
       const map = {};
       apiData.result.forEach(item => {
         const label = this.scanTypeMap[item.scanType];
@@ -327,7 +326,7 @@ document.addEventListener("DOMContentLoaded", () => {
           grade: item.grade ?? "N/A"
         };
       });
- 
+
       this.data.forEach(d => {
         if (map[d.label]) {
           d.target = map[d.label].score;
@@ -339,21 +338,21 @@ document.addEventListener("DOMContentLoaded", () => {
           d.grade  = "N/A";
         }
       });
- 
+
       this.easeToTarget();
     },
- 
+
     easeToTarget() {
       cancelAnimationFrame(this.easingFrame);
       const ease = 0.08;
- 
+
       const animate = () => {
         let done = true;
         this.data.forEach(d => {
           const diff = d.target - d.score;
           if (Math.abs(diff) > 0.2) {
             d.score += diff * ease;
-            done = false;
+            done     = false;
           } else {
             d.score = d.target;
           }
@@ -363,14 +362,14 @@ document.addEventListener("DOMContentLoaded", () => {
       };
       animate();
     },
- 
+
     drawRadar() {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.radarPoints = [];
- 
+
       const step  = (Math.PI * 2) / this.labels.length;
       const start = -Math.PI / 2;
- 
+
       // Grid rings
       for (let k = 1; k <= this.cfg.rings; k++) {
         this.ctx.beginPath();
@@ -383,33 +382,33 @@ document.addEventListener("DOMContentLoaded", () => {
         this.ctx.strokeStyle = this.cfg.grid;
         this.ctx.stroke();
       }
- 
+
       // Axes + labels
       this.ctx.font = this.cfg.font;
       this.labels.forEach((label, i) => {
-        const angle = start + i * step;
+        const angle  = start + i * step;
         const [x, y] = this.polar(angle, this.cfg.radius);
- 
+
         this.ctx.beginPath();
         this.ctx.moveTo(this.cfg.cx, this.cfg.cy);
         this.ctx.lineTo(x, y);
         this.ctx.strokeStyle = this.cfg.axis;
         this.ctx.stroke();
- 
-        const [lx, ly] = this.polar(angle, this.cfg.radius + 18);
-        this.ctx.fillStyle    = this.cfg.label;
-        this.ctx.textAlign    = Math.cos(angle) > 0.3 ? "left" : Math.cos(angle) < -0.3 ? "right" : "center";
-        this.ctx.textBaseline = Math.sin(angle) > 0.3 ? "top"  : Math.sin(angle) < -0.3 ? "bottom" : "middle";
+
+        const [lx, ly]         = this.polar(angle, this.cfg.radius + 18);
+        this.ctx.fillStyle      = this.cfg.label;
+        this.ctx.textAlign      = Math.cos(angle) > 0.3 ? "left" : Math.cos(angle) < -0.3 ? "right" : "center";
+        this.ctx.textBaseline   = Math.sin(angle) > 0.3 ? "top"  : Math.sin(angle) < -0.3 ? "bottom" : "middle";
         this.ctx.fillText(label, lx, ly);
       });
- 
+
       // Data polygon
       this.ctx.beginPath();
       this.data.forEach((d, i) => {
-        const angle = start + i * step;
-        const r     = this.cfg.radius * (d.score / 100);
+        const angle  = start + i * step;
+        const r      = this.cfg.radius * (d.score / 100);
         const [x, y] = this.polar(angle, r);
- 
+
         this.radarPoints.push({ x, y, label: d.label, grade: d.grade, total: d.total });
         i ? this.ctx.lineTo(x, y) : this.ctx.moveTo(x, y);
       });
@@ -418,7 +417,7 @@ document.addEventListener("DOMContentLoaded", () => {
       this.ctx.strokeStyle = this.cfg.stroke;
       this.ctx.fill();
       this.ctx.stroke();
- 
+
       // Points
       this.radarPoints.forEach(p => {
         this.ctx.beginPath();
@@ -427,22 +426,22 @@ document.addEventListener("DOMContentLoaded", () => {
         this.ctx.fill();
       });
     },
- 
+
     setupHoverTooltip() {
       this.canvas.addEventListener("mousemove", (e) => {
         if (!this.radarPoints.length) return;
- 
+
         const rect  = this.canvas.getBoundingClientRect();
         const x     = e.clientX - rect.left;
         const y     = e.clientY - rect.top;
         const hitR2 = CONFIG.TOOLTIP_RADIUS * CONFIG.TOOLTIP_RADIUS;
         let found   = null;
- 
+
         for (const p of this.radarPoints) {
           const dx = x - p.x, dy = y - p.y;
           if (dx * dx + dy * dy <= hitR2) { found = p; break; }
         }
- 
+
         this.tooltip.style.display = found ? "block" : "none";
         if (found) {
           this.tooltip.style.left = e.clientX + 12 + "px";
@@ -452,7 +451,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   };
- 
+
   /* ================= FINDINGS DISPLAY ================= */
   const findings = {
     descriptions: {
@@ -608,6 +607,13 @@ function setRiskWidths(high, medium, low, safe) {
 }
 
 
+
+
+
+  // -------------------- UPDATE RISK BAR --------------------
+
+  
+
   /* ================= UTILITIES ================= */
   function formatDate(dateString) {
     const date   = new Date(dateString);
@@ -618,30 +624,30 @@ function setRiskWidths(high, medium, low, safe) {
       "July","August","September","October","November","December"
     ];
     const month = months[date.getMonth()];
- 
+
     const suffix = (d) => {
       if (d > 3 && d < 21) return "th";
       return ["th","st","nd","rd"][d % 10] || "th";
     };
- 
+
     let hours  = date.getHours();
     const mins = String(date.getMinutes()).padStart(2, "0");
     const secs = String(date.getSeconds()).padStart(2, "0");
     const ampm = hours >= 12 ? "PM" : "AM";
-    hours      = hours % 12 || 12;
- 
+    hours       = hours % 12 || 12;
+
     return `${day}${suffix(day)} ${month} ${year} ${String(hours).padStart(2,"0")}:${mins}:${secs} ${ampm}`;
   }
- 
+
   /* ================= POLLING ================= */
   const REQUIRED_SCAN_TYPES = [
     "socialEngineering","externalVulnerabilities",
     "networkSecurity","applicationSecurity",
     "dnsHealth","ipReputation"
   ];
- 
+
   const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
- 
+
   function isResultComplete(result) {
     if (!Array.isArray(result)) return false;
     return REQUIRED_SCAN_TYPES.every(type => {
@@ -649,57 +655,86 @@ function setRiskWidths(high, medium, low, safe) {
       return scan && scan.grade !== null;
     });
   }
- 
+
   async function pollUntilAllDataReady(sessionId, delay = 4000, maxRetries = 100) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       console.log(`⏳ Polling attempt ${attempt}/${maxRetries}...`);
- 
+
       const apiData = await api.pollForResult(sessionId);
- 
+
       if (!apiData) {
         console.log("⚠️ No data, retrying...");
         await sleep(delay);
         continue;
       }
- 
+
       if (isResultComplete(apiData.result)) {
         console.log("✅ All scan data received!");
         return apiData;
       }
- 
+
       console.log(`📊 Incomplete. Found ${apiData.result?.length || 0} scan types.`);
       await sleep(delay);
     }
- 
+
     throw new Error("❌ Scan data not ready after max retries");
   }
- 
+
+  /* ================= BUTTON LOCK HELPERS ================= */
+  // ✅ FIX: Centralized helpers to lock/unlock ALL send buttons at once
+  function lockSendButtons() {
+    const mainBtn    = document.getElementById("handleSendMessage");
+    const initialBtn = document.getElementById("handleSendMessageInitial");
+    if (mainBtn)    { mainBtn.disabled    = true; mainBtn.classList.add("offed"); }
+    if (initialBtn) { initialBtn.disabled = true; initialBtn.classList.add("offed"); }
+    if (chat.sendBtn) chat.sendBtn.disabled = true;
+    // ✅ Input bar stays enabled — user can type freely while waiting
+  }
+
+  function unlockSendButtons() {
+    const mainBtn    = document.getElementById("handleSendMessage");
+    const initialBtn = document.getElementById("handleSendMessageInitial");
+    if (mainBtn)    { mainBtn.disabled    = false; mainBtn.classList.remove("offed"); }
+    if (initialBtn) { initialBtn.disabled = false; initialBtn.classList.remove("offed"); }
+    if (chat.sendBtn) chat.sendBtn.disabled = false;
+    // ✅ Input bar untouched — nothing to restore
+  }
+
   /* ================= MAIN HANDLER ================= */
+  // ✅ FIX: Guard flag prevents re-entry if somehow called twice
+  let isSending = false;
+
   async function handleSendMessages() {
+    if (isSending) return;
+
     const message = chat.chatInput.value.trim();
     if (!message) return;
- 
+
+    // ✅ FIX: Lock all buttons immediately before any async work
+    isSending = true;
+    lockSendButtons();
+
     chat.chatBod.classList.add("chat-started", "background-gray");
     chat.text.classList.add("hide");
     chat.pills.classList.add("hide");
- 
+
     chat.appendChatMessage(message, "user");
     chat.chatInput.value = "";
     chat.showTypingIndicator();
- 
+
     try {
       const res = await fetch(CONFIG.API_URL, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ session_id: SESSION_ID, message })
       });
- 
+
       if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
- 
+
       const emailData = await res.json();
       console.log("📧 Email Data:", emailData);
       chat.hideTypingIndicator();
- 
+
       /* ── Extract session ID from response ── */
       let sessionId = null;
       if (emailData.webhook?.session_id) {
@@ -708,11 +743,8 @@ function setRiskWidths(high, medium, low, safe) {
         const first = emailData.results.find(r => r.session_id);
         if (first) sessionId = first.session_id;
       }
- 
+
       if (sessionId) {
-        const chatBody   = document.querySelector(".chat_bod");
-        const resultBody = document.querySelector(".result_body");
- 
         /* ── Show user name ── */
         if (emailData.email) {
           const rawName    = emailData.email.split("@")[0];
@@ -729,28 +761,33 @@ function setRiskWidths(high, medium, low, safe) {
             `;
           }
         }
- 
+
         /* ── Switch to result view ── */
-        setTimeout(() => {
-          if (chatBody) {
-            chatBody.classList.add("fade-out");
-            chatBody.style.display = "none";
-          }
-          if (resultBody) {
-            resultBody.style.display = "block";
-            resultBody.classList.add("show");
-            initChatAnimation();
-          }
-        }, 300);
- 
-        /* ── Poll for scan results ── */
+        const chatBody   = document.querySelector(".chat_bod");
+        const resultBody = document.querySelector(".result_body");
+
+        await new Promise(resolve => setTimeout(resolve, 300));
+        if (chatBody) {
+          chatBody.classList.add("fade-out");
+          chatBody.style.display = "none";
+        }
+        if (resultBody) {
+          resultBody.style.display = "block";
+          resultBody.classList.add("show");
+        }
+
+        /* ── ✅ FIX: Run animation AND polling in parallel, wait for BOTH ── */
         try {
-          const apiResult = await pollUntilAllDataReady(sessionId);
+          const [apiResult] = await Promise.all([
+            pollUntilAllDataReady(sessionId),
+            initChatAnimation()              // returns a promise; buttons unlocked here only
+          ]);
+
           console.log("✅ Complete Result:", apiResult);
- 
+
           radar.applyAPIResult(apiResult);
           findings.render(apiResult);
- 
+
           if (apiResult.created_at) {
             const scanInfo = document.getElementById("scanInfo");
             if (scanInfo) scanInfo.textContent = "Last scanned on " + formatDate(apiResult.created_at);
@@ -760,28 +797,33 @@ function setRiskWidths(high, medium, low, safe) {
           chat.appendChatMessage("Unable to retrieve complete scan results. Please try again.", "bot");
         }
       }
- 
+
       const reply = emailData.reply || emailData.message || "No response";
       chat.appendChatMessage(reply, "bot");
- 
+
     } catch (err) {
       chat.hideTypingIndicator();
       chat.appendChatMessage("❌ Server error. Try again.", "bot");
       console.error("Handle message error:", err);
+
+    } finally {
+      // ✅ FIX: Always unlock — runs whether success, error, or timeout
+      isSending = false;
+      unlockSendButtons();
     }
   }
- 
+
   /* ================= BOTTOM CHAT EVENT LISTENERS ================= */
   if (chat.sendBtn) {
     chat.sendBtn.addEventListener("click", () => chat.sendMessage());
   }
- 
+
   if (chat.input) {
     chat.input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") { e.preventDefault(); chat.sendMessage(); }
     });
   }
- 
+
   if (chat.chatInput) {
     chat.chatInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") { e.preventDefault(); handleSendMessages(); }
@@ -790,7 +832,7 @@ function setRiskWidths(high, medium, low, safe) {
 
   document.getElementById("handleSendMessage")
     .addEventListener("click", () => handleSendMessages());
- 
+
   /* ================= ANIMATED PLACEHOLDER ================= */
   const animatePlaceholder = () => {
     const placeholders = [
@@ -812,11 +854,11 @@ function setRiskWidths(high, medium, low, safe) {
       "Free threat s","Free threat ","Free threat","Free threa","Free thre",
       "Free thr","Free th","Free t","Free ","Free","Fre","Fr","F",""
     ];
- 
-    let index = 0;
+
+    let index        = 0;
     const initialInput = document.getElementById("chatInputInitial");
     const bottomInput  = document.getElementById("chatInput");
- 
+
     if (initialInput || bottomInput) {
       setInterval(() => {
         const text = placeholders[index];
@@ -830,20 +872,20 @@ function setRiskWidths(high, medium, low, safe) {
       }, 200);
     }
   };
- 
+
   animatePlaceholder();
- 
-  /* ================= INIT RADAR ================= */
+
+
   radar.init();
   radar.startRandomLoading();
- 
+
   setTimeout(() => {
     const loader = document.getElementById("loader");
     if (loader) loader.style.display = "none";
     if (radar.canvas) radar.canvas.style.display = "block";
   }, CONFIG.LOADER_DELAY);
- 
-  /* ================= BEACON ON LOAD ================= */
+
+
   window.addEventListener("load", () => {
     const payload = { cryptoUID: crypto.randomUUID() };
     navigator.sendBeacon(
@@ -851,9 +893,9 @@ function setRiskWidths(high, medium, low, safe) {
       JSON.stringify(payload)
     );
   });
- 
+
 });
- 
+
 /* ================= CHAT ANIMATION (result view) ================= */
 function initChatAnimation() {
   const CONFIG = {
@@ -862,7 +904,7 @@ function initChatAnimation() {
     wordDelay:     230,
     scanItemDelay: 300
   };
- 
+
   const chat       = document.getElementById("chat");
   const headerText = "Thanks for sharing your email. This may take a few moments. If the scan takes longer, the complete report will be delivered to your email. The analysis will cover the following security categories.";
   const scanItems  = [
@@ -873,23 +915,23 @@ function initChatAnimation() {
     "IP Reputation",
     "External Vulnerabilities"
   ];
- 
+
   function createChatBubble() {
-    const bubble   = document.createElement("div");
+    const bubble     = document.createElement("div");
     bubble.className = "chat-bubble";
- 
-    const header   = document.createElement("div");
+
+    const header     = document.createElement("div");
     header.className = "bubble-text";
- 
-    const scanList = document.createElement("div");
+
+    const scanList     = document.createElement("div");
     scanList.className = "scan-list";
- 
+
     bubble.appendChild(header);
     bubble.appendChild(scanList);
- 
+
     return { bubble, header, scanList };
   }
- 
+
   function animateText(element, text, wordDelay) {
     return new Promise((resolve) => {
       const words = text.split(" ");
@@ -900,7 +942,7 @@ function initChatAnimation() {
       }, wordDelay);
     });
   }
- 
+
   function animateScanItems(list, items, itemDelay) {
     return new Promise((resolve) => {
       items.forEach((itemText, index) => {
@@ -914,48 +956,31 @@ function initChatAnimation() {
       });
     });
   }
- 
+
   function showFinalMessage() {
     const finalBubble       = document.createElement("div");
     finalBubble.className   = "final-message";
     finalBubble.textContent = "Now you can chat with us";
     chat.appendChild(finalBubble);
   }
- 
-  function setInputState(disabled) {
-    const inputBar   = document.querySelector(".input-bar input");
-    const sendButton = document.querySelector(".send");
- 
-    if (inputBar) {
-      inputBar.disabled     = disabled;
-      inputBar.placeholder  = disabled ? "Loading..." : "chat with me...";
-      inputBar.style.opacity = disabled ? "0.5" : "1";
-      inputBar.style.cursor  = disabled ? "not-allowed" : "text";
-    }
-    if (sendButton) {
-      sendButton.disabled      = disabled;
-      sendButton.style.opacity = disabled ? "0.5" : "1";
-      sendButton.style.cursor  = disabled ? "not-allowed" : "pointer";
-    }
-  }
- 
+
+
+
   async function initChat() {
-    setInputState(true);
- 
     await new Promise(resolve => setTimeout(resolve, CONFIG.initialDelay));
- 
+
     const { bubble, header, scanList } = createChatBubble();
     chat.appendChild(bubble);
- 
+
     await new Promise(resolve => setTimeout(resolve, CONFIG.headerDelay));
     await animateText(header, headerText, CONFIG.wordDelay);
     await animateScanItems(scanList, scanItems, CONFIG.scanItemDelay);
- 
+
     showFinalMessage();
- 
+
     await new Promise(resolve => setTimeout(resolve, 800));
-    setInputState(false);
+
   }
- 
-  initChat();
+
+  return initChat(); 
 }
